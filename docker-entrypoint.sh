@@ -48,13 +48,20 @@ set -e
 
 refresh_sql=/tmp/refresh_users_and_db.sql
 
-cat > "${refresh_sql}" <<-EOSQL
-	CREATE DATABASE IF NOT EXISTS $(cat ${APP_DB_NAME_SECRET});
-	grant all on $(cat ${APP_DB_NAME_SECRET}).* to
-		'$(cat ${APP_DB_USER_SECRET})'@'%' identified by '$(cat ${APP_DB_PASS_SECRET})' ${REQUIRE_SSL};
+DB_NAMES=$(cat ${APP_DB_NAME_SECRET})
+IFS=',' read -a DB_ARRAY <<< "$DB_NAMES"
+for DB_NAME in "${DB_ARRAY[@]}"; do
+	cat >> "${refresh_sql}" <<-EOSQL
+		CREATE DATABASE IF NOT EXISTS ${DB_NAME};
+		grant all on ${DB_NAME}.* to
+			'$(cat ${APP_DB_USER_SECRET})'@'%' identified by '$(cat ${APP_DB_PASS_SECRET})' ${REQUIRE_SSL};
+	EOSQL
+done
+
+cat >> "${refresh_sql}" <<-EOSQL2
 	GRANT USAGE ON *.* TO 'root'@'%' ${REQUIRE_SSL};
 	FLUSH PRIVILEGES;
-EOSQL
+EOSQL2
 
 echo "Update / create any database users..."
 mysql --host=${MYSQL_HOST} --port=${MYSQL_PORT} ${SSL_OPTS} < ${refresh_sql}
