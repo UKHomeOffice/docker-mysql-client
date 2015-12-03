@@ -13,6 +13,14 @@ if [ "${ENABLE_SSL}" == "TRUE" ]; then
     export REQUIRE_SSL="REQUIRE SSL"
 fi
 
+function make_secret_from_env {
+    file=$1
+    var=$2
+    if [ ! -f "${file}" ]; then
+        echo "${var}">"${file}"
+    fi
+}
+
 function check_root {
 	echo "Check default PW access..."
 	err_txt=$(echo "SELECT 1+1;" | mysql --host=${MYSQL_HOST} --port=${MYSQL_PORT} ${SSL_OPTS} 2>/dev/stdout)
@@ -30,6 +38,11 @@ function check_root {
 	fi
 }
 
+mkdir -p /etc/db
+make_secret_from_env "${ROOT_PASS_SECRET}" "${ROOT_PASS}"
+make_secret_from_env "${APP_DB_NAME_SECRET}" "${APP_DB_NAME}"
+make_secret_from_env "${APP_DB_USER_SECRET}" "${APP_DB_USER}"
+make_secret_from_env "${APP_DB_PASS_SECRET}" "${APP_DB_PASS}"
 MYSQL_HOST=$(eval echo ${MYSQL_HOST})
 MYSQL_PORT=$(eval echo ${MYSQL_PORT})
 
