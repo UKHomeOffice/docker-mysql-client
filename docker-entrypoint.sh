@@ -6,7 +6,8 @@ export ROOT_PASS_SECRET=${ROOT_PASS_SECRET:-/etc/db/db-root-pw}
 export APP_DB_NAME_SECRET=${APP_DB_NAME_SECRET:-/etc/db/db-name}
 export APP_DB_USER_SECRET=${APP_DB_USER_SECRET:-/etc/db/db-username}
 export APP_DB_PASS_SECRET=${APP_DB_PASS_SECRET:-/etc/db/db-password}
-export ENABLE_SSL=${true}
+export ENABLE_SSL=${ENABLE_SSL:-TRUE}
+export DROP_DB=${DROP_DB:-FALSE}
 export MYSQL_PORT="${MYSQL_PORT:-3306}"
 if [ "${ENABLE_SSL}" == "TRUE" ]; then
     export SSL_OPTS="--ssl=true --ssl-ca=/root/rds-combined-ca-bundle.pem"
@@ -64,7 +65,11 @@ refresh_sql=/tmp/refresh_users_and_db.sql
 DB_NAMES=$(cat ${APP_DB_NAME_SECRET})
 IFS=',' read -a DB_ARRAY <<< "$DB_NAMES"
 for DB_NAME in "${DB_ARRAY[@]}"; do
+    if [ "${DROP_DB}" == "TRUE" ]; then
+        DROP_STATEMENT="DROP DATABASE IF EXISTS ${DB_NAME};"
+    fi
 	cat >> "${refresh_sql}" <<-EOSQL
+	    ${DROP_STATEMENT}
 		CREATE DATABASE IF NOT EXISTS ${DB_NAME};
 		grant all on ${DB_NAME}.* to
 			'$(cat ${APP_DB_USER_SECRET})'@'%' identified by '$(cat ${APP_DB_PASS_SECRET})' ${REQUIRE_SSL};
