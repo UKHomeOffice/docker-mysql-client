@@ -1,4 +1,4 @@
-# Docker ClamAV
+# Docker Mysql client
 
 Docker container for provisioning mysql databases.
 
