@@ -53,7 +53,7 @@ curl -fail http://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem -o /
 # Allow for no passwords when running mysql as root...
 echo "[client]
 user=root
-password=$(cat ${ROOT_PASS_SECRET})
+password='$(cat ${ROOT_PASS_SECRET})'
 ">~/.my.cnf
 
 set +e
